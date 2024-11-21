@@ -1,0 +1,234 @@
+export function w $main() {
+@start
+    %encoded =l alloc8 8
+    call $encode(l $input, l %encoded, l 8)
+
+    # part 1
+    call $find_next(l %encoded, l 8, l 26)
+    %decoded =l alloc4 8
+    call $decode(l %encoded, l %decoded, l 8)
+    call $printf(l $part1_fmt, ..., w 8, l %decoded)
+
+    # part 2
+    call $find_next(l %encoded, l 8, l 26)
+    %decoded =l alloc4 8
+    call $decode(l %encoded, l %decoded, l 8)
+    call $printf(l $part2_fmt, ..., w 8, l %decoded)
+@end
+    ret 0
+}
+
+# void encode(char const* input, char* output, size_t len)
+function $encode(l %input, l %output, l %len) {
+@start
+    %i =l copy 0
+    jmp @loop_condition
+@loop_condition
+    %in_bounds =w cultl %i, %len
+    jnz %in_bounds, @loop_body, @loop_end
+@loop_body
+    %input_ptr =l add %input, %i
+    %input_item =w loadub %input_ptr
+    %output_item =w sub %input_item, 97  # ascii 'a' character
+    %output_ptr =l add %output, %i
+    storeb %output_item, %output_ptr
+    %i =l add %i, 1
+    jmp @loop_condition
+@loop_end
+    ret
+}
+
+# void decode(char const* input, char* output, size_t len)
+function $decode(l %input, l %output, l %len) {
+@start
+    %i =l copy 0
+    jmp @loop_condition
+@loop_condition
+    %in_bounds =w cultl %i, %len
+    jnz %in_bounds, @loop_body, @loop_end
+@loop_body
+    %input_ptr =l add %input, %i
+    %input_item =w loadub %input_ptr
+    %output_item =w add %input_item, 97  # ascii 'a' character
+    %output_ptr =l add %output, %i
+    storeb %output_item, %output_ptr
+    %i =l add %i, 1
+    jmp @loop_condition
+@loop_end
+    ret
+}
+
+# bool three_inc(char const* input, size_t len)
+function w $three_inc(l %input, l %len) {
+@start
+    %i =l copy 1
+    %counter =w copy 1
+@loop_condition
+    %in_bounds =w cultl %i, %len
+    jnz %in_bounds, @loop_body, @loop_end
+@loop_body
+    # char curr = input[i]
+    %curr_ptr =l add %input, %i
+    %curr =w loadub %curr_ptr
+    # char prev = input[i-1]
+    %prev_ptr =l sub %curr_ptr, 1
+    %prev =w loadub %prev_ptr
+    %diff =w sub %curr, %prev
+    %is_diff_one =w ceqw %diff, 1
+    jnz %is_diff_one, @if_diff_is_one, @if_diff_is_not_one
+    @if_diff_is_one
+        %counter =w add %counter, 1
+        %is_counter_three =w ceqw %counter, 3
+        jnz %is_counter_three, @if_counter_is_three, @end_if_diff_is_one
+        @if_counter_is_three
+            ret 1
+    @if_diff_is_not_one
+        %counter =w copy 1
+        jmp @end_if_diff_is_one
+    @end_if_diff_is_one
+        %i =l add %i, 1
+        jmp @loop_condition
+@loop_end
+    ret 0
+}
+
+# bool contains(char const* input, size_t input_len, char const* any_of, size_t any_of_len)
+function w $contains(l %input, l %input_len, l %any_of, l %any_of_len) {
+@start
+    %i =l copy 0
+@input_loop_condition
+    %in_bounds =w cultl %i, %input_len
+    jnz %in_bounds, @input_loop_body, @input_loop_end
+@input_loop_body
+    %input_item_ptr =l add %input, %i
+    %input_item =w loadub %input_item_ptr
+
+    %j =l copy 0
+    @any_of_loop_condition
+        %in_bounds =w cultl %j, %any_of_len
+        jnz %in_bounds, @any_of_loop_body, @any_of_loop_end
+    @any_of_loop_body
+        %any_of_item_ptr =l add %any_of, %j
+        %any_of_item =w loadub %any_of_item_ptr
+        %found =w ceqw %input_item, %any_of_item
+        jnz %found, @if_found, @if_not_found
+        @if_found
+            ret 1
+        @if_not_found
+            %j =l add %j, 1
+            jmp @any_of_loop_condition
+    @any_of_loop_end
+
+    %i =l add %i, 1
+    jmp @input_loop_condition
+@input_loop_end
+    ret 0
+}
+
+# bool two_pairs(char const* input, size_t len)
+function w $two_pairs(l %input, l %len) {
+@start
+    %pair1_index =l copy 1
+@pair1_loop_condition
+    %in_bounds =w cultl %pair1_index, %len
+    jnz %in_bounds, @pair1_loop_body, @not_found
+@pair1_loop_body
+    %curr_ptr =l add %input, %pair1_index
+    %curr =l loadub %curr_ptr
+    %prev_ptr =l sub %curr_ptr, 1
+    %prev =l loadub %prev_ptr
+    %is_pair =w ceqw %curr, %prev
+    jnz %is_pair, @if_is_pair1, @if_not_is_pair1
+    @if_is_pair1
+        %pair1_item =w copy %curr
+        jmp @pair1_loop_end
+    @if_not_is_pair1
+        %pair1_index =l add %pair1_index, 1
+        jmp @pair1_loop_condition
+@pair1_loop_end
+
+    %pair2_index =l add %pair1_index, 2
+@pair2_loop_condition
+    %in_bounds =w cultl %pair2_index, %len
+    jnz %in_bounds, @pair2_loop_body, @not_found
+@pair2_loop_body
+    %curr_ptr =l add %input, %pair2_index
+    %curr =l loadub %curr_ptr
+    %prev_ptr =l sub %curr_ptr, 1
+    %prev =l loadub %prev_ptr
+    %is_pair =w ceqw %curr, %prev
+    jnz %is_pair, @if_is_pair2, @if_not_is_pair2
+    @if_is_pair2
+        %same_pair =w ceqw %curr, %pair1_item
+        jnz %same_pair, @if_same_pair, @if_not_same_pair
+        @if_same_pair
+            jmp @if_not_is_pair2
+        @if_not_same_pair
+            ret 1  # finally found the two pairs
+    @if_not_is_pair2
+        %pair2_index =l add %pair2_index, 1
+        jmp @pair2_loop_condition
+
+@not_found
+    ret 0
+}
+
+# returns true when there's carry, meaning that the input isn't big enough to be incremented
+# bool increment(char* input, size_t len, int mod)
+function w $increment(l %input, l %len, w %mod) {
+@start
+    %i =l copy %len
+@loop_condition
+    %i =l sub %i, 1
+    %in_bounds =w csgtl %i, 0
+    jnz %in_bounds, @loop_body, @loop_end
+@loop_body
+    %item_ptr =l add %input, %i
+    %item =w loadub %item_ptr
+    %item =w add %item, 1
+    %item =w rem %item, %mod
+    storeb %item, %item_ptr
+    jnz %item, @loop_end, @loop_condition
+@loop_end
+    %carry =w ceql %i, 0
+    ret %carry
+}
+
+# returns true when there's carry, meaning that the input isn't big enough to store the next password
+# bool find_next(char* input, size_t len, int mod)
+function w $find_next(l %input, l %len, w %mod) {
+@start
+@loop
+    %carry =w call $increment(l %input, l %len, w %mod)
+    jnz %carry, @carry, @check_validity
+@check_validity
+    %is_valid =w call $is_valid_password(l %input, l %len)
+    jnz %is_valid, @found, @loop
+@found
+    ret 0
+@carry
+    ret 1
+}
+
+# returns true if the password is a valid password
+# bool is_valid_password(char const* input, size_t len)
+function w $is_valid_password(l %input, l %len) {
+@start
+    %has_three_inc =w call $three_inc(l %input, l %len)
+    jnz %has_three_inc, @ok1, @invalid
+@ok1
+    %contains_banned =w call $contains(l %input, l %len, l $banned_letters, l 3)
+    jnz %contains_banned, @invalid, @ok2
+@ok2
+    %has_two_pairs =w call $two_pairs(l %input, l %len)
+    jnz %has_two_pairs, @good, @invalid
+@good
+    ret 1
+@invalid
+    ret 0
+}
+
+data $input = { b "hxbxwxba" }
+data $banned_letters = { b "iol" }
+data $part1_fmt = { b "part 1: %.*s\n", b 0 }
+data $part2_fmt = { b "part 2: %.*s\n", b 0 }

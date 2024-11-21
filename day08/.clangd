@@ -1,0 +1,12 @@
+CompileFlags:
+  Add: [-Wall, -Wextra, -pedantic, -Wno-language-extension-token, -Wno-gnu-binary-literal, -Wno-string-plus-int, -Wno-empty-translation-unit, -Wno-unused-label, -Wno-gnu-empty-struct, -Wno-logical-op-parentheses, -xc]
+
+If:
+  PathMatch: [.*\.c, .*\.h]
+CompileFlags:
+  Add: [-std=c17]
+---
+If:
+  PathMatch: [.*\.cpp, .*\.hpp]
+CompileFlags:
+  Add: [-std=c++20]
