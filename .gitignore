@@ -6,3 +6,4 @@
 *.o
 *.cmi
 *.cmx
+.zig-cache/
